@@ -1,0 +1,13 @@
+{
+  email danibo@proton.me
+}
+
+moodle.techne.guru {
+  # Proxy til Moodle-container (definert i Docker labels)
+  reverse_proxy moodle-app:80
+}
+
+prosjekt.techne.guru {
+  # Proxy til OpenProject-container (definert i Docker labels)
+  reverse_proxy openproject-app:3000
+}
