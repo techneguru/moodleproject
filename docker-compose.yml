@@ -1,0 +1,104 @@
+version: "3.7"
+
+services:
+  # ----------------------------------------
+  # REVERSE PROXY: Caddy
+  # ----------------------------------------
+  caddy:
+    image: caddy:latest
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    # Mount Caddyfile og datavolumer
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+
+  # ----------------------------------------
+  # MOODLE (med MariaDB)
+  # ----------------------------------------
+  moodle-db:
+    image: mariadb:10.6
+    container_name: moodle-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: moodle_db
+      MYSQL_USER: teknikkeren
+      MYSQL_PASSWORD: "Fn+Qteknikkeren"
+      MYSQL_ROOT_PASSWORD: "Fn+Qteknikkeren"
+    volumes:
+      - moodle_db_data:/var/lib/mysql
+
+  moodle-app:
+    image: bitnami/moodle:latest
+    container_name: moodle-app
+    restart: unless-stopped
+    environment:
+      # Database
+      MOODLE_DATABASE_HOST: moodle-db
+      MOODLE_DATABASE_NAME: moodle_db
+      MOODLE_DATABASE_USER: teknikkeren
+      MOODLE_DATABASE_PASSWORD: "Fn+Qteknikkeren"
+
+      # Passord for Moodle admin
+      MOODLE_USERNAME: teknikkeren
+      MOODLE_PASSWORD: "Fn+Qteknikkeren"
+
+      # Moodle lar deg kjøre uten root-pass under Bitnami, men vi beholder "ALLOW_EMPTY_PASSWORD" for å unngå init-feil
+      ALLOW_EMPTY_PASSWORD: "yes"
+
+      # (Eventuelt: MOODLE_SITE_NAME: "My Moodle" osv.)
+    volumes:
+      - moodle_data:/bitnami/moodle
+    depends_on:
+      - moodle-db
+    # Caddy labels for automatisk routing
+    labels:
+      caddy: moodle.techne.guru
+      caddy.reverse_proxy: "{{upstreams 80}}"
+
+  # ----------------------------------------
+  # OPENPROJECT (med PostgreSQL)
+  # ----------------------------------------
+  openproject-db:
+    image: postgres:14
+    container_name: openproject-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: openproject_db
+      POSTGRES_USER: teknikkeren
+      POSTGRES_PASSWORD: "Fn+Qteknikkeren"
+    volumes:
+      - openproject_db_data:/var/lib/postgresql/data
+
+  openproject-app:
+    image: openproject/community:latest
+    container_name: openproject-app
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: "postgresql://teknikkeren:Fn+Qteknikkeren@openproject-db/openproject_db"
+      # Andre valgfrie variabler, f.eks SMTP:
+      # EMAIL_DELIVERY_METHOD: smtp
+      # SMTP_ADDRESS: "smtp.example.com"
+      # SMTP_PORT: 587
+      # SMTP_DOMAIN: "example.com"
+      # SMTP_USER: "teknikkeren"
+      # SMTP_PASSWORD: "Fn+Qteknikkeren"
+    depends_on:
+      - openproject-db
+    labels:
+      caddy: prosjekt.techne.guru
+      caddy.reverse_proxy: "{{upstreams 3000}}"
+
+# ----------------------------------------
+# VOLUMES
+# ----------------------------------------
+volumes:
+  moodle_db_data:
+  moodle_data:
+  openproject_db_data:
+  caddy_data:
+  caddy_config:
