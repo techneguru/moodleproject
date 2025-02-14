@@ -15,7 +15,7 @@ services:
       - caddy_config:/config
 
   # ----------------------------------------
-  # MOODLE (med MariaDB)
+  # MOODLE med MariaDB
   # ----------------------------------------
   moodle-db:
     image: mariadb:10.6
@@ -40,17 +40,20 @@ services:
       MOODLE_DATABASE_PASSWORD: "Fn+Qteknikkeren"
       MOODLE_USERNAME: teknikkeren
       MOODLE_PASSWORD: "Fn+Qteknikkeren"
+      # Bitnami-moodle lytter standard på 8080/8443:
+      # Vil du TVINGE port 80/443 i containeren i stedet?
+      # MOODLE_HTTP_PORT_NUMBER: 80
+      # MOODLE_HTTPS_PORT_NUMBER: 443
+
+      # Valgfritt: For enkel testing. Ikke sett "yes" i produksjon.
       ALLOW_EMPTY_PASSWORD: "yes"
     volumes:
       - moodle_data:/bitnami/moodle
     depends_on:
       - moodle-db
-    labels:
-      caddy: moodle.techne.guru
-      caddy.reverse_proxy: "{{upstreams 80}}"
 
   # ----------------------------------------
-  # OPENPROJECT (med PostgreSQL)
+  # OPENPROJECT med PostgreSQL
   # ----------------------------------------
   openproject-db:
     image: postgres:14
@@ -69,12 +72,15 @@ services:
     restart: unless-stopped
     environment:
       DATABASE_URL: "postgresql://teknikkeren:Fn+Qteknikkeren@openproject-db/openproject_db"
+      # Evt. mer konfig (f.eks. SMTP).
     depends_on:
       - openproject-db
-    labels:
-      caddy: prosjekt.techne.guru
-      caddy.reverse_proxy: "{{upstreams 3000}}"
+    # Lytter mest sannsynlig på port 80 i containeren.
+    # Hvis det viser seg å være 3000, oppdater Caddyfile.
 
+# ----------------------------------------
+# DEFINERTE VOLUMER
+# ----------------------------------------
 volumes:
   moodle_db_data:
   moodle_data:

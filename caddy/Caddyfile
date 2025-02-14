@@ -1,13 +1,13 @@
 {
-  email danibo@proton.me
+    email danibo@proton.me
 }
 
 moodle.techne.guru {
-  # Proxy til Moodle-container (definert i Docker labels)
-  reverse_proxy moodle-app:80
+    # Moodle (Bitnami) bruker vanligvis 8080 i containeren:
+    reverse_proxy moodle-app:8080
 }
 
 prosjekt.techne.guru {
-  # Proxy til OpenProject-container (definert i Docker labels)
-  reverse_proxy openproject-app:3000
+    # OpenProject-community:12 bruker ofte port 80 i containeren
+    reverse_proxy openproject-app:80
 }
