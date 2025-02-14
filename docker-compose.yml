@@ -1,5 +1,3 @@
-version: "3.7"
-
 services:
   # ----------------------------------------
   # REVERSE PROXY: Caddy
@@ -11,7 +9,6 @@ services:
     ports:
       - "80:80"
       - "443:443"
-    # Mount Caddyfile og datavolumer
     volumes:
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile
       - caddy_data:/data
@@ -37,25 +34,17 @@ services:
     container_name: moodle-app
     restart: unless-stopped
     environment:
-      # Database
       MOODLE_DATABASE_HOST: moodle-db
       MOODLE_DATABASE_NAME: moodle_db
       MOODLE_DATABASE_USER: teknikkeren
       MOODLE_DATABASE_PASSWORD: "Fn+Qteknikkeren"
-
-      # Passord for Moodle admin
       MOODLE_USERNAME: teknikkeren
       MOODLE_PASSWORD: "Fn+Qteknikkeren"
-
-      # Moodle lar deg kjøre uten root-pass under Bitnami, men vi beholder "ALLOW_EMPTY_PASSWORD" for å unngå init-feil
       ALLOW_EMPTY_PASSWORD: "yes"
-
-      # (Eventuelt: MOODLE_SITE_NAME: "My Moodle" osv.)
     volumes:
       - moodle_data:/bitnami/moodle
     depends_on:
       - moodle-db
-    # Caddy labels for automatisk routing
     labels:
       caddy: moodle.techne.guru
       caddy.reverse_proxy: "{{upstreams 80}}"
@@ -75,27 +64,17 @@ services:
       - openproject_db_data:/var/lib/postgresql/data
 
   openproject-app:
-    image: openproject/community:latest
+    image: openproject/community:12
     container_name: openproject-app
     restart: unless-stopped
     environment:
       DATABASE_URL: "postgresql://teknikkeren:Fn+Qteknikkeren@openproject-db/openproject_db"
-      # Andre valgfrie variabler, f.eks SMTP:
-      # EMAIL_DELIVERY_METHOD: smtp
-      # SMTP_ADDRESS: "smtp.example.com"
-      # SMTP_PORT: 587
-      # SMTP_DOMAIN: "example.com"
-      # SMTP_USER: "teknikkeren"
-      # SMTP_PASSWORD: "Fn+Qteknikkeren"
     depends_on:
       - openproject-db
     labels:
       caddy: prosjekt.techne.guru
       caddy.reverse_proxy: "{{upstreams 3000}}"
 
-# ----------------------------------------
-# VOLUMES
-# ----------------------------------------
 volumes:
   moodle_db_data:
   moodle_data:
